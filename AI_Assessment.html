@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhilGov ICT AI Capacity Assessment</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    
+    <!-- Prop-Types (Critical for Recharts) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
+    
+    <!-- Recharts (Using v2.5.0 for better UMD stability) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.5.0/Recharts.min.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- html2canvas (For chart capturing) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .slide-in { animation: slideIn 0.3s ease-out forwards; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        // Safely access Recharts
+        const Recharts = window.Recharts || {};
+        const { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } = Recharts;
+
+        const ChartFallback = () => (
+            <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg border border-gray-200 text-gray-400">
+                Chart Visualization Unavailable
+            </div>
+        );
+
+        // --- Role-Agnostic Question Bank ---
+        const questions = [
+            // PILLAR 1: TECHNICAL PROFICIENCY (TECH)
+            {
+                id: 1,
+                pillar: "Tech",
+                text: "When you need to draft an official Memo or Letter using AI, how do you ask the tool?",
+                options: [
+                    { weight: 1, text: "I just type 'Write a memo about the meeting'." },
+                    { weight: 2, text: "I provide the topic and who it is for." },
+                    { weight: 3, text: "I include the specific key points, the tone (formal/govt), and the recipient." },
+                    { weight: 4, text: "I use a 'Persona' (Act as an Admin Officer), provide context, constraints, and ask it to critique its own draft for clarity." }
+                ]
+            },
+            {
+                id: 2,
+                pillar: "Tech",
+                text: "You found a complex error in a spreadsheet formula or a discrepancy in a report. How do you use AI?",
+                options: [
+                    { weight: 1, text: "I don't use AI for that." },
+                    { weight: 2, text: "I paste the error to see what it says." },
+                    { weight: 3, text: "I describe the goal of the spreadsheet and the error to get a solution." },
+                    { weight: 4, text: "I explain the logic flow, paste the sanitized formula/data structure, and ask for optimization or error-checking." }
+                ]
+            },
+            {
+                id: 3,
+                pillar: "Tech",
+                text: "How familiar are you with giving AI 'Context' (history/background) before asking a question?",
+                options: [
+                    { weight: 1, text: "I treat every question as a new chat." },
+                    { weight: 2, text: "I sometimes mention previous topics." },
+                    { weight: 3, text: "I know it remembers previous messages in the same chat." },
+                    { weight: 4, text: "I actively manage the 'context window' by summarizing long threads so the AI doesn't forget earlier instructions." }
+                ]
+            },
+            {
+                id: 4,
+                pillar: "Tech",
+                text: "Which tool would you use to research the latest Government Circulars or Laws?",
+                options: [
+                    { weight: 1, text: "Any AI tool (ChatGPT 3.5, etc)." },
+                    { weight: 2, text: "I stick to Google Search only." },
+                    { weight: 3, text: "I use an AI connected to the internet (like Gemini) to get links." },
+                    { weight: 4, text: "I use a web-enabled AI, verify the links provided, and cross-reference with the Official Gazette." }
+                ]
+            },
+            {
+                id: 5,
+                pillar: "Tech",
+                text: "You need an image for a presentation or poster. How do you prompt?",
+                options: [
+                    { weight: 1, text: "I search for images on Google." },
+                    { weight: 2, text: "I ask 'Make a picture of an office'." },
+                    { weight: 3, text: "I describe the scene: 'Filipino government workers in a meeting'." },
+                    { weight: 4, text: "I specify style, lighting, aspect ratio, color palette (brand compliant), and ensure cultural representation." }
+                ]
+            },
+
+            // PILLAR 2: ETHICAL GOVERNANCE (ETHICS)
+            {
+                id: 6,
+                pillar: "Ethics",
+                text: "You need to summarize a list of citizen concerns that includes names and addresses. How do you use AI?",
+                options: [
+                    { weight: 1, text: "I upload the file immediately." },
+                    { weight: 2, text: "I ask my boss if it's okay." },
+                    { weight: 3, text: "I verify if the AI tool is secure." },
+                    { weight: 4, text: "I strictly remove all personal names and addresses (PII) before uploading, complying with the Data Privacy Act." }
+                ]
+            },
+            {
+                id: 7,
+                pillar: "Ethics",
+                text: "The AI provides a citation or fact that looks correct but you aren't sure. What do you do?",
+                options: [
+                    { weight: 1, text: "I trust it, it's AI." },
+                    { weight: 2, text: "I use it but add a disclaimer." },
+                    { weight: 3, text: "I remove the citation." },
+                    { weight: 4, text: "I verify the source manually. I treat unverified info as a 'hallucination' until proven otherwise." }
+                ]
+            },
+            {
+                id: 8,
+                pillar: "Ethics",
+                text: "How do you treat confidential government strategies when using public AI tools?",
+                options: [
+                    { weight: 1, text: "I input them freely." },
+                    { weight: 2, text: "I assume it's private." },
+                    { weight: 3, text: "I am cautious." },
+                    { weight: 4, text: "I ensure NO confidential/internal-only data is input into public models to prevent data leakage." }
+                ]
+            },
+            {
+                id: 9,
+                pillar: "Ethics",
+                text: "When generating content about 'The Filipino Public', what do you check for?",
+                options: [
+                    { weight: 1, text: "That it looks good." },
+                    { weight: 2, text: "That it's professional." },
+                    { weight: 3, text: "That it matches the topic." },
+                    { weight: 4, text: "I check for bias (gender, age, skin tone) to ensure inclusive and accurate representation of our citizens." }
+                ]
+            },
+            {
+                id: 10,
+                pillar: "Ethics",
+                text: "A colleague asks you to use AI to decide on a hiring candidate or a supplier.",
+                options: [
+                    { weight: 1, text: "Sure, let the AI decide." },
+                    { weight: 2, text: "I use it to rank them." },
+                    { weight: 3, text: "I use it to summarize their profiles only." },
+                    { weight: 4, text: "I refuse to use AI for the final judgment. Human oversight is required for high-stakes administrative decisions." }
+                ]
+            },
+
+            // PILLAR 3: OPERATIONAL INTEGRATION (OPS)
+            {
+                id: 11,
+                pillar: "Ops",
+                text: "How often do you use AI to speed up your routine tasks?",
+                options: [
+                    { weight: 1, text: "Never." },
+                    { weight: 2, text: "Occasionally for simple questions." },
+                    { weight: 3, text: "Daily, for drafting or grammar checks." },
+                    { weight: 4, text: "Constantly. It's integrated into my workflow for summarizing, planning, and executing tasks." }
+                ]
+            },
+            {
+                id: 12,
+                pillar: "Ops",
+                text: "You have a 50-page PDF Manual or Guideline to read. What do you do?",
+                options: [
+                    { weight: 1, text: "I print and read it all." },
+                    { weight: 2, text: "I skim read manually." },
+                    { weight: 3, text: "I copy parts into AI to explain." },
+                    { weight: 4, text: "I upload the PDF to a large-context AI (e.g. Gemini 1.5) and ask for a summary of points relevant to my specific role." }
+                ]
+            },
+            {
+                id: 13,
+                pillar: "Ops",
+                text: "You are writing Minutes of the Meeting from messy notes.",
+                options: [
+                    { weight: 1, text: "I write it manually." },
+                    { weight: 2, text: "I use AI for grammar only." },
+                    { weight: 3, text: "I paste notes and ask for a summary." },
+                    { weight: 4, text: "I provide the notes + our official Minutes Template, and ask AI to map the discussion to the Action Items." }
+                ]
+            },
+            {
+                id: 14,
+                pillar: "Ops",
+                text: "You receive repetitive inquiries (email/chat) from the public or colleagues.",
+                options: [
+                    { weight: 1, text: "I type replies every time." },
+                    { weight: 2, text: "I use copy-paste templates." },
+                    { weight: 3, text: "I ask AI to write a reply when I'm tired." },
+                    { weight: 4, text: "I use a prompt library to generate consistent, empathetic, and standard responses instantly." }
+                ]
+            },
+            {
+                id: 15,
+                pillar: "Ops",
+                text: "You need to create a presentation deck for a meeting.",
+                options: [
+                    { weight: 1, text: "I start with blank slides." },
+                    { weight: 2, text: "I use a template." },
+                    { weight: 3, text: "I use AI to write bullet points." },
+                    { weight: 4, text: "I use AI to generate the outline, talking points, and visual ideas, then export to a presentation tool." }
+                ]
+            },
+
+            // PILLAR 4: STRATEGIC INNOVATION (STRAT)
+            {
+                id: 16,
+                pillar: "Strat",
+                text: "How do you view AI's role in your office's future?",
+                options: [
+                    { weight: 1, text: "It's a fad." },
+                    { weight: 2, text: "It's a personal toy." },
+                    { weight: 3, text: "It helps individual productivity." },
+                    { weight: 4, text: "It is a tool to automate bureaucracy, improve public service, and achieve 'Bagong Pilipinas' goals." }
+                ]
+            },
+            {
+                id: 17,
+                pillar: "Strat",
+                text: "Have you suggested using AI to improve your team's process?",
+                options: [
+                    { weight: 1, text: "No." },
+                    { weight: 2, text: "I mentioned it casually." },
+                    { weight: 3, text: "Yes, for simple tasks." },
+                    { weight: 4, text: "Yes, I proposed a specific use-case (e.g., FAQ bot, auto-routing) and identified the risks." }
+                ]
+            },
+            {
+                id: 18,
+                pillar: "Strat",
+                text: "How do you stay updated on digital trends?",
+                options: [
+                    { weight: 1, text: "I don't." },
+                    { weight: 2, text: "Social media." },
+                    { weight: 3, text: "Tech news." },
+                    { weight: 4, text: "I follow DICT/CSC updates, take courses, and actively look for ways to apply new tech to government work." }
+                ]
+            },
+            {
+                id: 19,
+                pillar: "Strat",
+                text: "Your team is scared AI will replace them. What do you say?",
+                options: [
+                    { weight: 1, text: "Nothing." },
+                    { weight: 2, text: "Maybe it will." },
+                    { weight: 3, text: "Use it secretly." },
+                    { weight: 4, text: "I explain that AI replaces *tasks*, not people. It frees us to focus on high-value service. I offer to show them how." }
+                ]
+            },
+            {
+                id: 20,
+                pillar: "Strat",
+                text: "How does AI align with the Ease of Doing Business Act?",
+                options: [
+                    { weight: 1, text: "No connection." },
+                    { weight: 2, text: "Faster typing." },
+                    { weight: 3, text: "Less paper." },
+                    { weight: 4, text: "It streamlines processing time, reduces red tape through automation, and improves data-driven decision making." }
+                ]
+            }
+        ];
+
+        // --- Utils ---
+        const calculateScores = (answers) => {
+            const scores = { Tech: 0, Ethics: 0, Ops: 0, Strat: 0 };
+            const maxScores = { Tech: 0, Ethics: 0, Ops: 0, Strat: 0 };
+
+            questions.forEach(q => {
+                const answerWeight = answers[q.id] || 0;
+                scores[q.pillar] += answerWeight;
+                maxScores[q.pillar] += 4;
+            });
+
+            // Normalize to 100
+            return {
+                Tech: Math.round((scores.Tech / maxScores.Tech) * 100),
+                Ethics: Math.round((scores.Ethics / maxScores.Ethics) * 100),
+                Ops: Math.round((scores.Ops / maxScores.Ops) * 100),
+                Strat: Math.round((scores.Strat / maxScores.Strat) * 100),
+                Total: Math.round((Object.values(scores).reduce((a,b)=>a+b,0) / Object.values(maxScores).reduce((a,b)=>a+b,0)) * 100)
+            };
+        };
+
+        const getCompetencyLevel = (score) => {
+            if (score <= 25) return { 
+                title: "The Observer", 
+                color: "text-gray-600", 
+                desc: "You are skeptical or new to AI. Your journey starts with Digital Literacy.",
+                roadmap: "Focus on: Basic Computer Literacy, Understanding what AI is (and isn't), and using AI for simple searches." 
+            };
+            if (score <= 50) return { 
+                title: "The Explorer", 
+                color: "text-blue-600", 
+                desc: "You use AI occasionally for basic tasks. You are ready to learn Prompt Engineering.",
+                roadmap: "Focus on: Persona-based prompting, checking AI facts, and using AI for drafting emails." 
+            };
+            if (score <= 75) return { 
+                title: "The Practitioner", 
+                color: "text-indigo-600", 
+                desc: "You integrate AI into your workflow. You are ready to optimize and automate.",
+                roadmap: "Focus on: Integrating AI into spreadsheets, analyzing large PDFs, and creating standard prompt libraries for your team." 
+            };
+            return { 
+                title: "The AI Strategist", 
+                color: "text-emerald-600", 
+                desc: "You are a Digital Champion. You are ready to lead innovation.",
+                roadmap: "Focus on: Policy formulation, mentoring others, automating complex workflows, and data-driven governance." 
+            };
+        };
+
+        // --- Components ---
+
+        const WelcomeScreen = ({ onStart, userName, setUserName }) => (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 glass-panel rounded-2xl max-w-2xl mx-auto slide-in">
+
+				
+                <h1 className="text-3xl font-bold text-gray-800 mb-4">PhilGov ICT AI Capacity Assessment</h1>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                    A role-agnostic assessment for Government Employees (Admin, Technical, Project Management).
+                    Measure your readiness for the <strong>National AI Strategy</strong> and <strong>Bagong Pilipinas</strong> goals.
+                </p>
+                
+                <div className="w-full max-w-sm mb-6">
+                    <label className="block text-left text-sm font-medium text-gray-700 mb-1">Enter your Name / Alias</label>
+                    <input 
+                        type="text" 
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        placeholder="e.g. Juan dela Cruz"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    />
+                </div>
+
+                <button 
+                    onClick={onStart} 
+                    disabled={!userName.trim()}
+                    className={`px-8 py-3 rounded-lg font-semibold shadow-lg transition transform hover:-translate-y-1 ${!userName.trim() ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                >
+                    Start Assessment
+                </button>
+            </div>
+        );
+
+        const ResultsDashboard = ({ answers, userName }) => {
+            const results = calculateScores(answers);
+            const level = getCompetencyLevel(results.Total);
+            const chartRef = useRef(null);
+            
+            const data = [
+                { subject: 'Technical', A: results.Tech, fullMark: 100 },
+                { subject: 'Ethics', A: results.Ethics, fullMark: 100 },
+                { subject: 'Operations', A: results.Ops, fullMark: 100 },
+                { subject: 'Strategy', A: results.Strat, fullMark: 100 },
+            ];
+
+            const handleDownload = async () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // 1. Capture Chart
+                let chartImgData = null;
+                if (chartRef.current) {
+                    const canvas = await html2canvas(chartRef.current);
+                    chartImgData = canvas.toDataURL('image/png');
+                }
+
+                // 2. Generate PDF Content
+                doc.setFontSize(18);
+                doc.setTextColor(40, 40, 40);
+                doc.text("PhilGov ICT AI Capacity Assessment", 20, 20);
+                
+                doc.setFontSize(12);
+                doc.setTextColor(100, 100, 100);
+                doc.text(`Prepared for: ${userName}`, 20, 30);
+                doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 36);
+
+                doc.setDrawColor(200, 200, 200);
+                doc.line(20, 42, 190, 42);
+                
+                // Score Section
+                doc.setFontSize(14);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Competency Level: ${level.title}`, 20, 52);
+                doc.setFontSize(12);
+                doc.text(`Overall Score: ${results.Total}/100`, 20, 59);
+                
+                // Add Chart Image
+                if (chartImgData) {
+                    doc.addImage(chartImgData, 'PNG', 20, 65, 80, 60); // x, y, w, h
+                }
+
+                // Text Breakdown (Right of chart or below)
+                doc.text("Pillar Breakdown:", 110, 70);
+                doc.setFontSize(10);
+                doc.text(`Technical Proficiency: ${results.Tech}%`, 115, 77);
+                doc.text(`Ethical Governance: ${results.Ethics}%`, 115, 83);
+                doc.text(`Operational Integration: ${results.Ops}%`, 115, 89);
+                doc.text(`Strategic Innovation: ${results.Strat}%`, 115, 95);
+
+                // Explanation & Roadmap
+                let yPos = 135;
+                doc.setFontSize(14);
+                doc.text("Analysis & Roadmap:", 20, yPos);
+                yPos += 7;
+                doc.setFontSize(10);
+                const splitDesc = doc.splitTextToSize(level.desc, 170);
+                doc.text(splitDesc, 20, yPos);
+                yPos += (splitDesc.length * 5) + 5;
+
+                doc.setFont("helvetica", "bold");
+                doc.text("Your Recommended Path:", 20, yPos);
+                doc.setFont("helvetica", "normal");
+                yPos += 5;
+                const splitRoadmap = doc.splitTextToSize(level.roadmap, 170);
+                doc.text(splitRoadmap, 20, yPos);
+                yPos += (splitRoadmap.length * 5) + 10;
+
+                // Framework References
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.text("Framework References:", 20, yPos);
+                yPos += 6;
+                doc.setFontSize(9);
+                doc.setFont("helvetica", "normal");
+                const frameworks = [
+                    "1. DICT National ICT Competency Standards (NICS)",
+                    "2. CSC Digital Leadership Program (DiLP)",
+                    "3. Republic Act 10173 (Data Privacy Act of 2012)",
+                    "4. Republic Act 11032 (Ease of Doing Business Act)"
+                ];
+                frameworks.forEach(fw => {
+                    doc.text(fw, 20, yPos);
+                    yPos += 5;
+                });
+
+                doc.save(`PhilGov_AI_Result_${userName.replace(/\s+/g, '_')}.pdf`);
+            };
+
+            return (
+                <div className="max-w-4xl mx-auto pb-10 slide-in">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-2 text-center">Assessment Results</h2>
+                    <p className="text-center text-gray-500 mb-8">Profile for: <span className="font-bold text-blue-600">{userName}</span></p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        {/* Score Card */}
+                        <div className="glass-panel p-6 rounded-2xl flex flex-col justify-center items-center text-center">
+                            <div className="text-sm text-gray-500 uppercase tracking-wider font-semibold mb-2">Competency Level</div>
+                            <div className={`text-4xl font-bold mb-2 ${level.color}`}>{level.title}</div>
+                            <div className="text-6xl font-black text-gray-800 mb-4">{results.Total}<span className="text-2xl text-gray-400 font-normal">/100</span></div>
+                            <p className="text-gray-600 px-4 mb-4">{level.desc}</p>
+                        </div>
+
+                        {/* Radar Chart */}
+                        <div className="glass-panel p-4 rounded-2xl flex justify-center items-center bg-white" ref={chartRef}>
+                            {ResponsiveContainer && RadarChart ? (
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={data}>
+                                        <PolarGrid />
+                                        <PolarAngleAxis dataKey="subject" tick={{ fill: '#4b5563', fontSize: 12 }} />
+                                        <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                                        <Radar name={userName} dataKey="A" stroke="#2563eb" fill="#3b82f6" fillOpacity={0.6} />
+                                        <Legend />
+                                    </RadarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <ChartFallback />
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Detailed Analysis & Roadmap */}
+                    <div className="glass-panel p-8 rounded-2xl mb-8">
+                        <h3 className="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Your AI Roadmap</h3>
+                        
+                        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                            <h4 className="font-bold text-blue-800 mb-2">Detailed Explanation</h4>
+                            <p className="text-gray-700 text-sm leading-relaxed mb-4">
+                                Your score indicates you are at the <strong>{level.title}</strong> stage. 
+                                In the context of government service, this means:
+                            </p>
+                            <p className="text-gray-800 font-medium italic mb-4">"{level.roadmap}"</p>
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 className="font-semibold text-gray-700 mb-2">Pillar Performance</h4>
+                                <ul className="space-y-3 text-sm">
+                                    <li className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
+                                        <span>Technical (Prompting)</span>
+                                        <span className={`font-bold ${results.Tech > 70 ? 'text-green-600' : 'text-orange-500'}`}>{results.Tech}%</span>
+                                    </li>
+                                    <li className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
+                                        <span>Ethics (Privacy/Bias)</span>
+                                        <span className={`font-bold ${results.Ethics > 70 ? 'text-green-600' : 'text-orange-500'}`}>{results.Ethics}%</span>
+                                    </li>
+                                    <li className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
+                                        <span>Operations (Workflow)</span>
+                                        <span className={`font-bold ${results.Ops > 70 ? 'text-green-600' : 'text-orange-500'}`}>{results.Ops}%</span>
+                                    </li>
+                                    <li className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
+                                        <span>Strategy (Innovation)</span>
+                                        <span className={`font-bold ${results.Strat > 70 ? 'text-green-600' : 'text-orange-500'}`}>{results.Strat}%</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 className="font-semibold text-gray-700 mb-2">Framework References</h4>
+                                <div className="text-xs text-gray-500 space-y-2 bg-gray-50 p-3 rounded-lg border">
+                                    <p>Results aligned with:</p>
+                                    <ul className="list-disc list-inside">
+                                        <li>DICT National ICT Competency Standards (NICS)</li>
+                                        <li>CSC Digital Leadership Program (DiLP)</li>
+                                        <li>Republic Act 10173 (Data Privacy Act)</li>
+                                        <li>Republic Act 11032 (Ease of Doing Business)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-center space-x-4">
+                        <button 
+                            onClick={() => window.location.reload()}
+                            className="px-6 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 font-medium hover:bg-gray-50 transition"
+                        >
+                            Retake Assessment
+                        </button>
+                        <button 
+                            onClick={handleDownload}
+                            className="px-6 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 shadow-lg flex items-center transition"
+                        >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download PDF Report
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const QuestionCard = ({ question, currentAnswer, onAnswer, onNext, onBack, isLast, index, total }) => {
+            return (
+                <div className="max-w-3xl mx-auto slide-in">
+                    <div className="flex justify-between text-sm text-gray-500 mb-2 font-medium">
+                        <span>{question.pillar === 'Tech' ? 'Technical Proficiency' : 
+                               question.pillar === 'Ethics' ? 'Ethical Governance' :
+                               question.pillar === 'Ops' ? 'Operational Integration' : 'Strategic Innovation'}</span>
+                        <span>{index + 1} of {total}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                        <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style={{ width: `${((index + 1) / total) * 100}%` }}></div>
+                    </div>
+
+                    <div className="glass-panel p-8 rounded-2xl mb-6">
+                        <h2 className="text-xl font-semibold text-gray-800 mb-6">{question.text}</h2>
+                        <div className="space-y-3">
+                            {question.options.map((opt, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => onAnswer(question.id, opt.weight)}
+                                    className={`w-full text-left p-4 rounded-xl border transition-all duration-200 ${
+                                        currentAnswer === opt.weight 
+                                        ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' 
+                                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    <div className="flex items-center">
+                                        <div className={`w-5 h-5 rounded-full border mr-3 flex items-center justify-center ${currentAnswer === opt.weight ? 'border-blue-500' : 'border-gray-400'}`}>
+                                            {currentAnswer === opt.weight && <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />}
+                                        </div>
+                                        <span className="text-gray-700">{opt.text}</span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="flex justify-between">
+                        <button 
+                            onClick={onBack} 
+                            disabled={index === 0}
+                            className={`px-6 py-2 rounded-lg font-medium transition ${index === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-200 bg-white shadow-sm'}`}
+                        >
+                            Back
+                        </button>
+                        <button 
+                            onClick={onNext}
+                            disabled={!currentAnswer}
+                            className={`px-8 py-2 rounded-lg font-medium shadow-lg transition ${!currentAnswer ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                        >
+                            {isLast ? 'See Results' : 'Next'}
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [started, setStarted] = useState(false);
+            const [userName, setUserName] = useState("");
+            const [currentQIndex, setCurrentQIndex] = useState(0);
+            const [answers, setAnswers] = useState({});
+            const [finished, setFinished] = useState(false);
+
+            const handleAnswer = (qId, weight) => {
+                setAnswers(prev => ({ ...prev, [qId]: weight }));
+            };
+
+            const handleNext = () => {
+                if (currentQIndex < questions.length - 1) {
+                    setCurrentQIndex(curr => curr + 1);
+                } else {
+                    setFinished(true);
+                }
+            };
+
+            const handleBack = () => {
+                if (currentQIndex > 0) {
+                    setCurrentQIndex(curr => curr - 1);
+                }
+            };
+
+            return (
+                <div className="min-h-screen p-4 md:p-8 relative overflow-hidden">
+                    {/* Background Decorative Blobs */}
+                    <div className="absolute top-0 left-0 w-96 h-96 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 -translate-x-1/2 -translate-y-1/2 animate-blob"></div>
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 translate-x-1/2 -translate-y-1/2 animate-blob animation-delay-2000"></div>
+                    
+                    <div className="relative z-10 max-w-5xl mx-auto">
+                        {!started ? (
+                            <WelcomeScreen onStart={() => setStarted(true)} userName={userName} setUserName={setUserName} />
+                        ) : !finished ? (
+                            <QuestionCard 
+                                question={questions[currentQIndex]}
+                                index={currentQIndex}
+                                total={questions.length}
+                                currentAnswer={answers[questions[currentQIndex].id]}
+                                onAnswer={handleAnswer}
+                                onNext={handleNext}
+                                onBack={handleBack}
+                                isLast={currentQIndex === questions.length - 1}
+                            />
+                        ) : (
+                            <ResultsDashboard answers={answers} userName={userName} />
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
