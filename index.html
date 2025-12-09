@@ -12,10 +12,10 @@
     <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     
-    <!-- Prop-Types (Critical for Recharts) -->
+    <!-- Prop-Types -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.8.1/prop-types.min.js"></script>
     
-    <!-- Recharts (Using v2.5.0 for better UMD stability) -->
+    <!-- Recharts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.5.0/Recharts.min.js"></script>
     
     <!-- Babel -->
@@ -27,7 +27,7 @@
     <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
-    <!-- html2canvas (For chart capturing) -->
+    <!-- html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
@@ -51,8 +51,6 @@
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
-        
-        // Safely access Recharts
         const Recharts = window.Recharts || {};
         const { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } = Recharts;
 
@@ -120,7 +118,6 @@
                     { weight: 4, text: "I specify style, lighting, aspect ratio, color palette (brand compliant), and ensure cultural representation." }
                 ]
             },
-
             // PILLAR 2: ETHICAL GOVERNANCE (ETHICS)
             {
                 id: 6,
@@ -177,7 +174,6 @@
                     { weight: 4, text: "I refuse to use AI for the final judgment. Human oversight is required for high-stakes administrative decisions." }
                 ]
             },
-
             // PILLAR 3: OPERATIONAL INTEGRATION (OPS)
             {
                 id: 11,
@@ -234,7 +230,6 @@
                     { weight: 4, text: "I use AI to generate the outline, talking points, and visual ideas, then export to a presentation tool." }
                 ]
             },
-
             // PILLAR 4: STRATEGIC INNOVATION (STRAT)
             {
                 id: 16,
@@ -293,7 +288,7 @@
             }
         ];
 
-        // --- Utils ---
+        // --- Logic Engine ---
         const calculateScores = (answers) => {
             const scores = { Tech: 0, Ethics: 0, Ops: 0, Strat: 0 };
             const maxScores = { Tech: 0, Ethics: 0, Ops: 0, Strat: 0 };
@@ -304,7 +299,6 @@
                 maxScores[q.pillar] += 4;
             });
 
-            // Normalize to 100
             return {
                 Tech: Math.round((scores.Tech / maxScores.Tech) * 100),
                 Ethics: Math.round((scores.Ethics / maxScores.Ethics) * 100),
@@ -318,39 +312,75 @@
             if (score <= 25) return { 
                 title: "The Observer", 
                 color: "text-gray-600", 
-                desc: "You are skeptical or new to AI. Your journey starts with Digital Literacy.",
-                roadmap: "Focus on: Basic Computer Literacy, Understanding what AI is (and isn't), and using AI for simple searches." 
+                deepDive: "You are currently on the periphery of the AI revolution. While you may be skeptical or haven't found a compelling use case yet, this stage presents a risk: the gap between AI-enabled workers and traditional workflows is widening rapidly. In the context of government service, sticking to manual processes for repetitive tasks contributes to the 'red tape' that the Ease of Doing Business Act aims to eliminate. Your potential is untapped.",
+                roadmap: [
+                    "Digital Literacy: Take the free DICT 'Digital Literacy' introductory course to understand the basics of cloud and AI.",
+                    "Demystification: Use ChatGPT or Gemini for one non-work task (e.g., 'Draft a birthday greeting') to see how it works.",
+                    "Awareness: Read the Executive Summary of the National AI Strategy Roadmap (NAISR 2.0)."
+                ]
             };
             if (score <= 50) return { 
                 title: "The Explorer", 
                 color: "text-blue-600", 
-                desc: "You use AI occasionally for basic tasks. You are ready to learn Prompt Engineering.",
-                roadmap: "Focus on: Persona-based prompting, checking AI facts, and using AI for drafting emails." 
+                deepDive: "You have dipped your toes in. You likely use AI for 'writer's block' or basic grammar checks. However, you might still be using 'zero-shot' prompts (asking once without context), which leads to generic, robotic outputs. You are aware of the tools but are not yet using them to significantly alter your workload or efficiency. You are ready to move from 'playing' to 'working'.",
+                roadmap: [
+                    "Prompt Engineering: Learn the 'R-C-T' (Role, Context, Task) prompting method to get better results.",
+                    "Data Privacy: Memorize the NPC's guidelines on PII. Make it a habit to never paste names or IDs.",
+                    "Routine Application: Challenge yourself to use AI for ONE official email draft per day."
+                ]
             };
             if (score <= 75) return { 
                 title: "The Practitioner", 
                 color: "text-indigo-600", 
-                desc: "You integrate AI into your workflow. You are ready to optimize and automate.",
-                roadmap: "Focus on: Integrating AI into spreadsheets, analyzing large PDFs, and creating standard prompt libraries for your team." 
+                deepDive: "You are the backbone of the modern workforce. AI is a tool you use weekly, if not daily. You know how to summarize documents and draft code. The danger here is complacency—using AI only for text generation and not for *analysis* or *strategy*. You may also be at risk of 'automation bias' (trusting the AI too much without verification). You are ready to become a unit leader.",
+                roadmap: [
+                    "Advanced Analysis: Move beyond text. Use AI to analyze anonymized Excel/CSV data for trends.",
+                    "Process Automation: Build a standard 'Prompt Library' for your unit's recurring reports so everyone produces consistent quality.",
+                    "Mentorship: Teach one 'Observer' colleague how to use AI for a simple task."
+                ]
             };
             return { 
                 title: "The AI Strategist", 
                 color: "text-emerald-600", 
-                desc: "You are a Digital Champion. You are ready to lead innovation.",
-                roadmap: "Focus on: Policy formulation, mentoring others, automating complex workflows, and data-driven governance." 
+                deepDive: "You are a Digital Champion. You see AI not just as a typewriter, but as a reasoning engine. Your role now is governance and innovation. You must ensure your agency doesn't just 'use' AI, but uses it *responsibly* and *structurally*. You align technology with the 'Bagong Pilipinas' vision of a responsive, modern bureaucracy.",
+                roadmap: [
+                    "Policy Formulation: Draft a 'Use of GenAI' concept paper or policy guideline for your division.",
+                    "System Integration: Propose API integrations (e.g., integrating an LLM into the agency website for citizen queries).",
+                    "Ethics Watch: Serve as the 'Human in the Loop' for high-stakes decisions, ensuring bias is checked."
+                ]
             };
+        };
+
+        const getActionItems = (results) => {
+            const actions = [];
+            
+            if (results.Tech < 60) {
+                actions.push({ title: "Tech Upgrade", text: "Practice the 'Persona' method: 'Act as a [Role], write a [Format] for [Audience]'." });
+            }
+            if (results.Ethics < 60) {
+                actions.push({ title: "Compliance Check", text: "Read NPC Circular 16-01. Audit your recent AI chats for accidental PII leaks." });
+            }
+            if (results.Ops < 60) {
+                actions.push({ title: "Workflow Fix", text: "Identify your most boring weekly task. Spend 30 mins trying to automate it with AI." });
+            }
+            if (results.Strat < 60) {
+                actions.push({ title: "Future Vision", text: "Propose one small AI pilot project to your Division Chief (e.g., 'AI for meeting minutes')." });
+            }
+            
+            if (actions.length === 0) {
+                actions.push({ title: "Lead the Way", text: "You are top tier! Organize a Knowledge Sharing Session (KSS) for your team." });
+            }
+            
+            return actions;
         };
 
         // --- Components ---
 
         const WelcomeScreen = ({ onStart, userName, setUserName }) => (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8 glass-panel rounded-2xl max-w-2xl mx-auto slide-in">
-
-				
                 <h1 className="text-3xl font-bold text-gray-800 mb-4">PhilGov ICT AI Capacity Assessment</h1>
                 <p className="text-gray-600 mb-6 leading-relaxed">
-                    A role-agnostic assessment for Government Employees (Admin, Technical, Project Management).
-                    Measure your readiness for the <strong>National AI Strategy</strong> and <strong>Bagong Pilipinas</strong> goals.
+                    A role-agnostic assessment for Government Employees. Measure your readiness for the <strong>National AI Strategy</strong>.
                 </p>
                 
                 <div className="w-full max-w-sm mb-6">
@@ -377,6 +407,7 @@
         const ResultsDashboard = ({ answers, userName }) => {
             const results = calculateScores(answers);
             const level = getCompetencyLevel(results.Total);
+            const actionItems = getActionItems(results);
             const chartRef = useRef(null);
             
             const data = [
@@ -404,7 +435,7 @@
                 
                 doc.setFontSize(12);
                 doc.setTextColor(100, 100, 100);
-                doc.text(`Prepared for: ${userName}`, 20, 30);
+                doc.text(`Profile: ${userName}`, 20, 30);
                 doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 36);
 
                 doc.setDrawColor(200, 200, 200);
@@ -413,57 +444,76 @@
                 // Score Section
                 doc.setFontSize(14);
                 doc.setTextColor(0, 0, 0);
-                doc.text(`Competency Level: ${level.title}`, 20, 52);
-                doc.setFontSize(12);
-                doc.text(`Overall Score: ${results.Total}/100`, 20, 59);
+                doc.text(`Level: ${level.title} (${results.Total}/100)`, 20, 52);
                 
                 // Add Chart Image
                 if (chartImgData) {
-                    doc.addImage(chartImgData, 'PNG', 20, 65, 80, 60); // x, y, w, h
+                    doc.addImage(chartImgData, 'PNG', 20, 55, 80, 60); 
                 }
 
-                // Text Breakdown (Right of chart or below)
-                doc.text("Pillar Breakdown:", 110, 70);
+                // Text Breakdown
+                doc.text("Scores:", 110, 60);
                 doc.setFontSize(10);
-                doc.text(`Technical Proficiency: ${results.Tech}%`, 115, 77);
-                doc.text(`Ethical Governance: ${results.Ethics}%`, 115, 83);
-                doc.text(`Operational Integration: ${results.Ops}%`, 115, 89);
-                doc.text(`Strategic Innovation: ${results.Strat}%`, 115, 95);
+                doc.text(`Technical: ${results.Tech}%`, 115, 67);
+                doc.text(`Ethics: ${results.Ethics}%`, 115, 73);
+                doc.text(`Operations: ${results.Ops}%`, 115, 79);
+                doc.text(`Strategy: ${results.Strat}%`, 115, 85);
 
-                // Explanation & Roadmap
-                let yPos = 135;
+                // Detailed Analysis
+                let yPos = 125;
                 doc.setFontSize(14);
-                doc.text("Analysis & Roadmap:", 20, yPos);
+                doc.setFont("helvetica", "bold");
+                doc.text("Comprehensive Analysis:", 20, yPos);
                 yPos += 7;
+                doc.setFont("helvetica", "normal");
                 doc.setFontSize(10);
-                const splitDesc = doc.splitTextToSize(level.desc, 170);
-                doc.text(splitDesc, 20, yPos);
-                yPos += (splitDesc.length * 5) + 5;
+                const splitDeepDive = doc.splitTextToSize(level.deepDive, 170);
+                doc.text(splitDeepDive, 20, yPos);
+                yPos += (splitDeepDive.length * 5) + 10;
 
+                // Roadmap
+                doc.setFontSize(14);
                 doc.setFont("helvetica", "bold");
-                doc.text("Your Recommended Path:", 20, yPos);
+                doc.text("Your Professional Roadmap:", 20, yPos);
+                yPos += 7;
                 doc.setFont("helvetica", "normal");
-                yPos += 5;
-                const splitRoadmap = doc.splitTextToSize(level.roadmap, 170);
-                doc.text(splitRoadmap, 20, yPos);
-                yPos += (splitRoadmap.length * 5) + 10;
+                doc.setFontSize(10);
+                level.roadmap.forEach((step, i) => {
+                     const stepText = `${i + 1}. ${step}`;
+                     const splitStep = doc.splitTextToSize(stepText, 170);
+                     doc.text(splitStep, 20, yPos);
+                     yPos += (splitStep.length * 5) + 2;
+                });
+                yPos += 10;
 
-                // Framework References
-                doc.setFontSize(12);
+                // Reference Links (Explicit URLs)
+                doc.addPage();
+                yPos = 20;
+                doc.setFontSize(14);
                 doc.setFont("helvetica", "bold");
-                doc.text("Framework References:", 20, yPos);
-                yPos += 6;
+                doc.text("Actionable References (Clickable URLs):", 20, yPos);
+                yPos += 10;
+                doc.setFont("helvetica", "normal");
                 doc.setFontSize(9);
-                doc.setFont("helvetica", "normal");
-                const frameworks = [
-                    "1. DICT National ICT Competency Standards (NICS)",
-                    "2. CSC Digital Leadership Program (DiLP)",
-                    "3. Republic Act 10173 (Data Privacy Act of 2012)",
-                    "4. Republic Act 11032 (Ease of Doing Business Act)"
+                
+                const references = [
+                    { title: "National AI Strategy Roadmap (NAISR 2.0)", url: "https://www.dti.gov.ph/archives/news-archives/dti-drives-ai-innovation-national-roadmap-2-0-cair-launch/" },
+                    { title: "National ICT Competency Standards (NICS)", url: "https://dict.gov.ph/national-ict-competency-standards" },
+                    { title: "Data Privacy Act (RA 10173) - NPC", url: "https://privacy.gov.ph/data-privacy-act/" },
+                    { title: "Ease of Doing Business Act (RA 11032)", url: "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/2/83125" },
+                    { title: "CSC Digital Leadership Program", url: "https://www.csc.gov.ph/csc-launches-digital-leadership-program-for-civil-servants" },
+                    { title: "Bagong Pilipinas MC No. 24", url: "https://www.officialgazette.gov.ph/2023/07/03/memorandum-circular-no-24-s-2023/" }
                 ];
-                frameworks.forEach(fw => {
-                    doc.text(fw, 20, yPos);
+
+                references.forEach(ref => {
+                    doc.setFont("helvetica", "bold");
+                    doc.text(ref.title, 20, yPos);
                     yPos += 5;
+                    doc.setFont("helvetica", "normal");
+                    doc.setTextColor(0, 0, 255);
+                    doc.textWithLink(ref.url, 20, yPos, { url: ref.url });
+                    yPos += 8;
+                    doc.setTextColor(0, 0, 0);
                 });
 
                 doc.save(`PhilGov_AI_Result_${userName.replace(/\s+/g, '_')}.pdf`);
@@ -480,7 +530,6 @@
                             <div className="text-sm text-gray-500 uppercase tracking-wider font-semibold mb-2">Competency Level</div>
                             <div className={`text-4xl font-bold mb-2 ${level.color}`}>{level.title}</div>
                             <div className="text-6xl font-black text-gray-800 mb-4">{results.Total}<span className="text-2xl text-gray-400 font-normal">/100</span></div>
-                            <p className="text-gray-600 px-4 mb-4">{level.desc}</p>
                         </div>
 
                         {/* Radar Chart */}
@@ -503,50 +552,53 @@
 
                     {/* Detailed Analysis & Roadmap */}
                     <div className="glass-panel p-8 rounded-2xl mb-8">
-                        <h3 className="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Your AI Roadmap</h3>
+                        <h3 className="text-xl font-bold text-gray-800 mb-6 border-b pb-2">Comprehensive Analysis</h3>
                         
-                        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                            <h4 className="font-bold text-blue-800 mb-2">Detailed Explanation</h4>
-                            <p className="text-gray-700 text-sm leading-relaxed mb-4">
-                                Your score indicates you are at the <strong>{level.title}</strong> stage. 
-                                In the context of government service, this means:
+                        <div className="mb-8">
+                            <h4 className="font-bold text-blue-800 mb-2">The Deep Dive</h4>
+                            <p className="text-gray-700 text-sm leading-relaxed mb-4 text-justify">
+                                {level.deepDive}
                             </p>
-                            <p className="text-gray-800 font-medium italic mb-4">"{level.roadmap}"</p>
                         </div>
 
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <div>
-                                <h4 className="font-semibold text-gray-700 mb-2">Pillar Performance</h4>
-                                <ul className="space-y-3 text-sm">
-                                    <li className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
-                                        <span>Technical (Prompting)</span>
-                                        <span className={`font-bold ${results.Tech > 70 ? 'text-green-600' : 'text-orange-500'}`}>{results.Tech}%</span>
-                                    </li>
-                                    <li className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
-                                        <span>Ethics (Privacy/Bias)</span>
-                                        <span className={`font-bold ${results.Ethics > 70 ? 'text-green-600' : 'text-orange-500'}`}>{results.Ethics}%</span>
-                                    </li>
-                                    <li className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
-                                        <span>Operations (Workflow)</span>
-                                        <span className={`font-bold ${results.Ops > 70 ? 'text-green-600' : 'text-orange-500'}`}>{results.Ops}%</span>
-                                    </li>
-                                    <li className="flex justify-between items-center p-2 bg-white rounded shadow-sm">
-                                        <span>Strategy (Innovation)</span>
-                                        <span className={`font-bold ${results.Strat > 70 ? 'text-green-600' : 'text-orange-500'}`}>{results.Strat}%</span>
-                                    </li>
+                        <div className="grid md:grid-cols-2 gap-6 mb-8">
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                <h4 className="font-bold text-blue-900 mb-3 flex items-center">
+                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                    3-Step Roadmap
+                                </h4>
+                                <ul className="space-y-4">
+                                    {level.roadmap.map((step, idx) => (
+                                        <li key={idx} className="flex text-sm text-gray-700">
+                                            <span className="font-bold text-blue-500 mr-2">{idx + 1}.</span>
+                                            <span>{step}</span>
+                                        </li>
+                                    ))}
                                 </ul>
                             </div>
-                            <div>
-                                <h4 className="font-semibold text-gray-700 mb-2">Framework References</h4>
-                                <div className="text-xs text-gray-500 space-y-2 bg-gray-50 p-3 rounded-lg border">
-                                    <p>Results aligned with:</p>
-                                    <ul className="list-disc list-inside">
-                                        <li>DICT National ICT Competency Standards (NICS)</li>
-                                        <li>CSC Digital Leadership Program (DiLP)</li>
-                                        <li>Republic Act 10173 (Data Privacy Act)</li>
-                                        <li>Republic Act 11032 (Ease of Doing Business)</li>
-                                    </ul>
-                                </div>
+
+                            <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100">
+                                <h4 className="font-bold text-emerald-900 mb-3 flex items-center">
+                                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Action Items (This Week)
+                                </h4>
+                                <ul className="space-y-3">
+                                    {actionItems.map((item, idx) => (
+                                        <li key={idx} className="text-sm text-gray-700 border-b border-emerald-200 pb-2 last:border-0">
+                                            <span className="font-bold text-emerald-700 block mb-1">{item.title}</span>
+                                            {item.text}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 className="font-semibold text-gray-700 mb-2 text-sm uppercase tracking-wide">Resources</h4>
+                            <div className="flex flex-wrap gap-2">
+                                <a href="https://dict.gov.ph/national-ict-competency-standards" target="_blank" className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-xs text-gray-600 rounded-full transition">NICS Standards</a>
+                                <a href="https://privacy.gov.ph/data-privacy-act/" target="_blank" className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-xs text-gray-600 rounded-full transition">Data Privacy Act</a>
+                                <a href="https://www.officialgazette.gov.ph/2023/07/03/memorandum-circular-no-24-s-2023/" target="_blank" className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-xs text-gray-600 rounded-full transition">Bagong Pilipinas</a>
                             </div>
                         </div>
                     </div>
